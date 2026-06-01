@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: hokm-telegram-miniapp
+    env: static
+    staticPublishPath: .
+    buildCommand: echo "Static site, no build needed"
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: ALLOWALL
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"

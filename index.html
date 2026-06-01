@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Hokm - حکم برقی</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #0f1528;
+    --bg-card: #141c30;
+    --bg-surface: #1a2340;
+    --accent-blue: #00d4ff;
+    --accent-cyan: #00ffcc;
+    --accent-orange: #ff6b2b;
+    --accent-red: #ff3d5a;
+    --accent-green: #39ff14;
+    --text-primary: #e8f4ff;
+    --text-secondary: #7a9bc4;
+    --text-dim: #3d5470;
+    --border: rgba(0, 212, 255, 0.15);
+    --border-glow: rgba(0, 212, 255, 0.4);
+    --grid-color: rgba(0, 212, 255, 0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .circuit-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+
+  .screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ─── HEADER ─── */
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,14,26,0.9);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .app-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+  }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
+  .signal-bar {
+    width: 4px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    animation: pulse-bar 1.5s infinite;
+  }
+
+  .signal-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+  .signal-bar:nth-child(2) { height: 10px; animation-delay: 0.2s; }
+  .signal-bar:nth-child(3) { height: 14px; animation-delay: 0.4s; }
+  .signal-bar:nth-child(4) { height: 18px; animation-delay: 0.6s; }
+
+  @keyframes pulse-bar {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    padding: 32px 20px 24px;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid var(--border-glow);
+    color: var(--accent-cyan);
+    font-size: 11px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .hero p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── STATS ROW ─── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 20px 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 1px;
+    background: var(--accent-blue);
+    box-shadow: 0 0 8px var(--accent-blue);
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent-cyan);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── SECTION TITLE ─── */
+  .section-title {
+    padding: 0 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── ROOMS LIST ─── */
+  .rooms-list {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .room-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .room-card::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, var(--accent-blue), var(--accent-cyan));
+    border-radius: 0 16px 16px 0;
+  }
+
+  .room-card:active { transform: scale(0.98); }
+
+  .room-card.locked .room-status-icon { color: var(--accent-orange); }
+  .room-card.open .room-status-icon { color: var(--accent-green); }
+
+  .room-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .room-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .room-id-badge {
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .room-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .room-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .room-meta-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .room-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .players-avatars {
+    display: flex;
+    gap: -4px;
+  }
+
+  .player-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: -6px;
+  }
+
+  .player-avatar:first-child { margin-left: 0; }
+
+  .av-blue { background: rgba(0,212,255,0.2); color: var(--accent-blue); }
+  .av-green { background: rgba(57,255,20,0.2); color: var(--accent-green); }
+  .av-orange { background: rgba(255,107,43,0.2); color: var(--accent-orange); }
+  .av-red { background: rgba(255,61,90,0.2); color: var(--accent-red); }
+  .av-empty { background: var(--bg-surface); color: var(--text-dim); border: 1px dashed var(--border); }
+
+  .room-join-btn {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Vazirmatn', sans-serif;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .room-join-btn.locked {
+    background: rgba(255,107,43,0.15);
+    color: var(--accent-orange);
+    border: 1px solid rgba(255,107,43,0.3);
+  }
+
+  .room-join-btn.open {
+    background: rgba(57,255,20,0.15);
+    color: var(--accent-green);
+    border: 1px solid rgba(57,255,20,0.3);
+  }
+
+  /* ─── CREATE ROOM BTN ─── */
+  .fab-create {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    color: #000;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .fab-create:active { transform: translateX(-50%) scale(0.97); }
+
+  .fab-create svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal-sheet {
+    background: var(--bg-secondary);
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid var(--border);
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 20px 40px;
+    position: relative;
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .modal-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+  }
+
+  /* ─── PIN PAD ─── */
+  .pin-display {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-glow);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .pin-dot.filled {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+
+  .pin-error .pin-dot.filled {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    box-shadow: 0 0 8px var(--accent-red);
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  @keyframes card-drop {
+    from { opacity: 0; transform: translateY(-18px) scale(0.85); }
+    to   { opacity: 1; }
+  }
+
+  .pin-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .pin-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pin-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent-blue);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .pin-btn:active { transform: scale(0.94); }
+  .pin-btn:active::after { opacity: 0.15; }
+
+  .pin-btn.special {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .pin-btn.del { color: var(--accent-orange); }
+
+  /* ─── INPUTS ─── */
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .elec-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 15px;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .elec-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+  }
+
+  .elec-input::placeholder { color: var(--text-dim); }
+
+  /* ─── SWITCH ─── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .switch {
+    width: 48px;
+    height: 26px;
+    background: var(--bg-surface);
+    border-radius: 13px;
+    position: relative;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .switch.on {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+
+  .switch.on::after { right: auto; left: 2px; }
+
+  /* ─── PRIMARY BUTTON ─── */
+  .btn-primary {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border: none;
+    border-radius: 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:active { background: var(--bg-surface); }
+
+  /* ─── ROOM SCREEN ─── */
+  .room-screen-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .team-board {
+    background: linear-gradient(180deg, rgba(0,212,255,0.03), transparent);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+
+  .teams-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .team-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .team-card.team-a { border-color: rgba(0, 212, 255, 0.3); }
+  .team-card.team-b { border-color: rgba(255, 107, 43, 0.3); }
+
+  .team-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .team-name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .team-a .team-name { color: var(--accent-blue); }
+  .team-b .team-name { color: var(--accent-orange); }
+
+  .team-score {
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  .team-a .team-score { color: var(--accent-cyan); }
+  .team-b .team-score { color: var(--accent-orange); }
+
+  .team-players { display: flex; flex-direction: column; gap: 5px; }
+
+  .team-player {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .team-player-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .team-a .team-player-dot { background: var(--accent-blue); box-shadow: 0 0 4px var(--accent-blue); }
+  .team-b .team-player-dot { background: var(--accent-orange); box-shadow: 0 0 4px var(--accent-orange); }
+
+  .team-player.active { color: var(--text-primary); font-weight: 600; }
+
+  /* ─── HOKM INDICATOR ─── */
+  .hokm-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hokm-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .hokm-suit {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .suit-icon { font-size: 22px; line-height: 1; }
+  .suit-name { font-size: 14px; font-weight: 700; }
+
+  .suit-hearts .suit-icon, .suit-diamonds .suit-icon { color: var(--accent-red); }
+  .suit-clubs .suit-icon, .suit-spades .suit-icon { color: var(--text-primary); }
+
+  .round-badge {
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(0,212,255,0.1);
+    color: var(--accent-blue);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 3px 10px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ─── PLAY AREA ─── */
+  .play-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .table-center {
+    width: 140px;
+    height: 100px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .center-cards {
+    display: flex;
+    gap: -8px;
+    position: relative;
+  }
+
+  .played-card {
+    width: 44px;
+    height: 64px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    font-size: 13px;
+    font-weight: 800;
+    position: absolute;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .played-card:nth-child(1) { transform: rotate(-8deg) translate(-30px, -10px); }
+  .played-card:nth-child(2) { transform: rotate(5deg) translate(10px, -5px); }
+  .played-card:nth-child(3) { transform: rotate(-3deg) translate(-10px, 15px); }
+  .played-card:nth-child(4) { transform: rotate(10deg) translate(25px, 8px); }
+
+  .played-card.red { background: #fff; color: var(--accent-red); }
+  .played-card.black { background: #fff; color: #1a1a2e; }
+
+  .played-card.empty {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+  }
+
+  /* ─── HAND AREA ─── */
+  .hand-area {
+    padding: 8px 0 12px;
+    border-top: 1px solid var(--border);
+    background: rgba(10,14,26,0.8);
+  }
+
+  .hand-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .hand-cards {
+    display: flex;
+    justify-content: center;
+    padding: 0 8px;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .hand-cards::-webkit-scrollbar { display: none; }
+
+  .hand-card {
+    width: 54px;
+    height: 80px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    margin-left: -14px;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: -3px 0 8px rgba(0,0,0,0.3);
+  }
+
+  .hand-card:first-child { margin-left: 0; }
+  .hand-card:hover, .hand-card:active { transform: translateY(-12px) !important; z-index: 10; }
+  .hand-card.selected { transform: translateY(-16px) !important; z-index: 10; outline: 2px solid var(--accent-cyan); }
+
+  .hand-card.red-card { background: linear-gradient(160deg, #fff 60%, #ffe8e8); color: var(--accent-red); }
+  .hand-card.black-card { background: linear-gradient(160deg, #fff 60%, #e8eeff); color: #1a1a2e; }
+
+  .card-rank { font-size: 15px; font-weight: 900; line-height: 1; align-self: flex-start; }
+  .card-suit { font-size: 22px; line-height: 1; }
+  .card-rank-bot { font-size: 15px; font-weight: 900; line-height: 1; align-self: flex-end; transform: rotate(180deg); }
+
+  /* ─── ACTION BTNS ─── */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px 0;
+  }
+
+  .btn-action {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-action.primary-action {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    color: #000;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 212, 255, 0.3);
+  }
+
+  .btn-action:active { transform: scale(0.97); }
+
+  /* ─── WAITING ─── */
+  .waiting-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 40px 20px;
+  }
+
+  .radar-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+  }
+
+  .radar-circle {
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--accent-blue);
+    border-radius: 50%;
+    opacity: 0;
+    animation: radar-ring 2.5s ease-out infinite;
+  }
+
+  .radar-circle:nth-child(2) { animation-delay: 0.8s; }
+  .radar-circle:nth-child(3) { animation-delay: 1.6s; }
+
+  @keyframes radar-ring {
+    0% { transform: scale(0.3); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 0; }
+  }
+
+  .radar-dot {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .radar-center {
+    width: 20px;
+    height: 20px;
+    background: var(--accent-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 16px var(--accent-blue);
+  }
+
+  .waiting-text {
+    text-align: center;
+  }
+
+  .waiting-text h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .waiting-text p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .players-waiting {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .waiting-player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .waiting-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    border: 2px solid;
+    position: relative;
+  }
+
+  .waiting-avatar.joined { animation: avatar-glow 2s infinite; }
+
+  @keyframes avatar-glow {
+    0%,100% { box-shadow: 0 0 6px currentColor; }
+    50% { box-shadow: 0 0 14px currentColor; }
+  }
+
+  .waiting-avatar.empty {
+    border-color: var(--border);
+    color: var(--text-dim);
+    background: var(--bg-surface);
+    border-style: dashed;
+  }
+
+  .waiting-player-name {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-glow);
+    color: var(--accent-cyan);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 999;
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── SCROLLABLE BODY ─── */
+  .scroll-body { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+  .scroll-body::-webkit-scrollbar { display: none; }
+
+  /* ─── LIVE DOT ─── */
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+    box-shadow: 0 0 4px var(--accent-green);
+    display: inline-block;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* ─── NAME SCREEN ─── */
+  .name-screen-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 28px;
+    gap: 0;
+  }
+
+  .name-logo-big {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+    margin-bottom: 22px;
+  }
+
+  .name-title {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .name-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 36px;
+  }
+
+  .name-input-wrap {
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .name-input-wrap .name-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+  }
+
+  .name-field {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-glow);
+    border-radius: 14px;
+    padding: 15px 44px 15px 16px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.25s;
+    text-align: right;
+    box-shadow: 0 0 0 0 rgba(0,212,255,0);
+  }
+
+  .name-field:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.12);
+  }
+
+  .name-field::placeholder { color: var(--text-dim); font-weight: 400; }
+
+  .name-field.error {
+    border-color: var(--accent-red);
+    animation: shake 0.4s ease;
+  }
+
+  .name-error-msg {
+    font-size: 12px;
+    color: var(--accent-red);
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 320px;
+    min-height: 18px;
+  }
+
+  .name-submit-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border: none;
+    border-radius: 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.35);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .name-submit-btn:active { transform: scale(0.97); }
+
+  .name-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 18px;
+    line-height: 1.6;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-height: 600px) {
+    .hero { padding: 16px 20px 12px; }
+    .hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="circuit-bg" viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <path d="M0 200 L80 200 L80 280 L200 280 L200 360 L320 360 L320 200 L400 200" stroke="#00d4ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+  <path d="M0 500 L60 500 L60 420 L160 420 L160 340 L280 340" stroke="#00d4ff" stroke-width="0.5" fill="none" opacity="0.2"/>
+  <circle cx="80" cy="200" r="4" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+  <circle cx="200" cy="280" r="4" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+  <circle cx="320" cy="360" r="4" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.5"/>
+  <circle cx="160" cy="420" r="3" fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.4"/>
+  <rect x="190" y="195" width="20" height="10" rx="2" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.6"/>
+  <rect x="310" y="355" width="20" height="10" rx="2" fill="none" stroke="#00ffcc" stroke-width="1" opacity="0.4"/>
+  <path d="M100 600 L100 680 L200 680" stroke="#ff6b2b" stroke-width="0.4" fill="none" opacity="0.2"/>
+  <path d="M250 100 L250 180 L350 180 L350 100" stroke="#00d4ff" stroke-width="0.4" fill="none" opacity="0.15"/>
+  <circle cx="80" cy="60" r="20" fill="none" stroke="#00d4ff" stroke-width="0.5" opacity="0.3"/>
+  <circle cx="340" cy="720" r="15" fill="none" stroke="#00ffcc" stroke-width="0.5" opacity="0.2"/>
+  <line x1="50" y1="700" x2="370" y2="700" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+  <line x1="50" y1="740" x2="250" y2="740" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+</svg>
+
+<div class="toast" id="toast"></div>
+
+<!-- ──────────── NAME SCREEN ──────────── -->
+<div class="screen active" id="screen-name">
+  <div class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">HOKM</div>
+        <div class="logo-sub">Electric Edition</div>
+      </div>
+    </div>
+    <div class="signal-bars">
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+      <div class="signal-bar"></div>
+    </div>
+  </div>
+
+  <div class="name-screen-wrap">
+    <div class="name-logo-big">⚡</div>
+    <div class="name-title">خوش آمدید!</div>
+    <div class="name-subtitle">برای ورود به بازی<br>نام نمایشی خود را وارد کنید</div>
+
+    <div class="name-input-wrap">
+      <span class="name-icon">👤</span>
+      <input
+        class="name-field"
+        id="player-name-input"
+        type="text"
+        placeholder="نام شما..."
+        maxlength="16"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') submitName()"
+        oninput="clearNameError()"
+      >
+    </div>
+    <div class="name-error-msg" id="name-error-msg"></div>
+
+    <button class="name-submit-btn" onclick="submitName()">
+      <span>ورود به بازی</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+
+    <div class="name-note">نام شما برای بقیه بازیکن‌ها نمایش داده می‌شود<br>می‌توانید از نام فارسی یا لاتین استفاده کنید</div>
+  </div>
+</div>
+
+<!-- ──────────── LOBBY ──────────── -->
+<div class="screen" id="screen-lobby">
+  <div class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">HOKM</div>
+        <div class="logo-sub">Electric Edition</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="lobby-player-chip" style="display:flex;align-items:center;gap:6px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:5px 12px 5px 8px;cursor:pointer;" onclick="changeName()">
+        <div id="lobby-avatar" style="width:22px;height:22px;border-radius:50%;background:rgba(0,212,255,0.2);color:var(--accent-cyan);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+        <span id="lobby-player-name" style="font-size:12px;font-weight:700;color:var(--accent-cyan);"></span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text-dim)"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+      <div class="signal-bars">
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+        <div class="signal-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-body">
+    <div class="hero">
+      <div class="hero-badge">⚡ ELECTRICAL EDITION</div>
+      <h1 id="lobby-hero-title">حکم برقی</h1>
+      <p>بازی کارتی حکم با رابط هوشمند<br>تیم ۲ در برابر ۲ &bull; ۷ دست برنده</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value" id="stat-rooms">4</span>
+        <div class="stat-label">اتاق‌ها</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-online">12</span>
+        <div class="stat-label">آنلاین</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">7</span>
+        <div class="stat-label">برنده</div>
+      </div>
+    </div>
+
+    <div class="section-title">
+      <span><span class="live-dot"></span> اتاق‌های فعال</span>
+    </div>
+
+    <div class="rooms-list" id="rooms-list"></div>
+  </div>
+
+  <button class="fab-create" onclick="showCreateRoom()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    ساخت اتاق جدید
+  </button>
+</div>
+
+<!-- ──────────── CREATE ROOM MODAL ──────────── -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚡ ساخت اتاق</div>
+    <div class="modal-subtitle">مشخصات اتاق بازی را وارد کنید</div>
+
+    <div class="input-group">
+      <label class="input-label">نام اتاق</label>
+      <input class="elec-input" id="room-name-input" placeholder="مثلاً: اتاق ولتاژ بالا" maxlength="24">
+    </div>
+
+    <div class="toggle-row" onclick="togglePassword(this)">
+      <div>
+        <div class="toggle-label">🔒 رمز ۴ رقمی</div>
+        <div class="toggle-sub">فقط با رمز می‌توان وارد شد</div>
+      </div>
+      <div class="switch" id="pwd-switch"></div>
+    </div>
+
+    <div id="pin-setup-area" style="display:none; margin-bottom:16px;">
+      <div style="text-align:center; margin-bottom:12px;">
+        <div class="input-label" style="display:block; text-align:center;">رمز ۴ رقمی اتاق</div>
+      </div>
+      <div class="pin-display" id="create-pin-display">
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+        <div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-btn" onclick="createPinPress('1')">۱</button>
+        <button class="pin-btn" onclick="createPinPress('2')">۲</button>
+        <button class="pin-btn" onclick="createPinPress('3')">۳</button>
+        <button class="pin-btn" onclick="createPinPress('4')">۴</button>
+        <button class="pin-btn" onclick="createPinPress('5')">۵</button>
+        <button class="pin-btn" onclick="createPinPress('6')">۶</button>
+        <button class="pin-btn" onclick="createPinPress('7')">۷</button>
+        <button class="pin-btn" onclick="createPinPress('8')">۸</button>
+        <button class="pin-btn" onclick="createPinPress('9')">۹</button>
+        <button class="pin-btn special" onclick="createPinClear()">پاک</button>
+        <button class="pin-btn" onclick="createPinPress('0')">۰</button>
+        <button class="pin-btn del" onclick="createPinDelete()">⌫</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="doCreateRoom()">⚡ ایجاد اتاق</button>
+    <button class="btn-secondary" onclick="closeModal('modal-create')">انصراف</button>
+  </div>
+</div>
+
+<!-- ──────────── PIN MODAL ──────────── -->
+<div class="modal-overlay" id="modal-pin">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔒 رمز اتاق</div>
+    <div class="modal-subtitle" id="pin-room-name">رمز ۴ رقمی اتاق را وارد کنید</div>
+
+    <div class="pin-display" id="join-pin-display">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="joinPinPress('1')">۱</button>
+      <button class="pin-btn" onclick="joinPinPress('2')">۲</button>
+      <button class="pin-btn" onclick="joinPinPress('3')">۳</button>
+      <button class="pin-btn" onclick="joinPinPress('4')">۴</button>
+      <button class="pin-btn" onclick="joinPinPress('5')">۵</button>
+      <button class="pin-btn" onclick="joinPinPress('6')">۶</button>
+      <button class="pin-btn" onclick="joinPinPress('7')">۷</button>
+      <button class="pin-btn" onclick="joinPinPress('8')">۸</button>
+      <button class="pin-btn" onclick="joinPinPress('9')">۹</button>
+      <button class="pin-btn special" onclick="joinPinClear()">پاک</button>
+      <button class="pin-btn" onclick="joinPinPress('0')">۰</button>
+      <button class="pin-btn del" onclick="joinPinDelete()">⌫</button>
+    </div>
+
+    <button class="btn-secondary" style="margin-top:20px;" onclick="closeModal('modal-pin')">انصراف</button>
+  </div>
+</div>
+
+<!-- ──────────── WAITING ROOM ──────────── -->
+<div class="screen" id="screen-waiting">
+  <div class="app-header">
+    <button onclick="goBack()" style="background:none;border:none;color:var(--accent-blue);font-size:14px;font-weight:700;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;gap:5px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      بازگشت
+    </button>
+    <div>
+      <div class="logo-text" id="waiting-room-title">اتاق ولتاژ</div>
+    </div>
+    <div style="font-size:11px; color:var(--text-dim); letter-spacing:1px;" id="waiting-room-id">#0042</div>
+  </div>
+
+  <div class="waiting-screen">
+    <div class="radar-wrap">
+      <div class="radar-circle"></div>
+      <div class="radar-circle"></div>
+      <div class="radar-circle"></div>
+      <div class="radar-dot"><div class="radar-center"></div></div>
+    </div>
+
+    <div class="waiting-text">
+      <h3>در انتظار بازیکنان...</h3>
+      <p>بازی با ۴ بازیکن شروع می‌شود<br>لینک اتاق را به دوستانتان بدهید</p>
+    </div>
+
+    <div class="players-waiting" id="waiting-players-grid"></div>
+
+    <button class="btn-primary" style="max-width:280px;" onclick="startGame()">▶ شروع بازی (۴/۴)</button>
+    <button class="btn-secondary" style="max-width:280px; margin-top:0;" onclick="copyRoomLink()">📋 کپی لینک اتاق</button>
+  </div>
+</div>
+
+<!-- ──────────── GAME SCREEN ──────────── -->
+<div class="screen" id="screen-game">
+  <div class="app-header">
+    <button onclick="goBack()" style="background:none;border:none;color:var(--accent-blue);font-size:14px;font-weight:700;cursor:pointer;font-family:Vazirmatn,sans-serif;display:flex;align-items:center;gap:5px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="logo-text">⚡ حکم</div>
+    <div class="round-badge" id="round-badge">دست ۱</div>
+  </div>
+
+  <div class="room-screen-content">
+    <div class="team-board">
+      <div class="teams-grid">
+        <div class="team-card team-a">
+          <div class="team-header">
+            <span class="team-name">تیم آبی</span>
+            <span class="team-score" id="score-a">0</span>
+          </div>
+          <div class="team-players">
+            <div class="team-player active"><div class="team-player-dot"></div> <span id="p1-name">علی</span> <span style="font-size:10px;color:var(--accent-cyan);">(شما)</span></div>
+            <div class="team-player"><div class="team-player-dot"></div> <span id="p3-name">رضا</span></div>
+          </div>
+        </div>
+        <div class="team-card team-b">
+          <div class="team-header">
+            <span class="team-name">تیم قرمز</span>
+            <span class="team-score" id="score-b">0</span>
+          </div>
+          <div class="team-players">
+            <div class="team-player"><div class="team-player-dot"></div> <span id="p2-name">سارا</span></div>
+            <div class="team-player"><div class="team-player-dot"></div> <span id="p4-name">مهران</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hokm-bar">
+      <span class="hokm-label">حکم</span>
+      <div class="hokm-suit suit-hearts" id="hokm-indicator">
+        <span class="suit-icon">♥</span>
+        <span class="suit-name">دل</span>
+      </div>
+      <span class="round-badge" id="trick-count">برد: ۰/۷</span>
+    </div>
+
+    <div class="play-area">
+      <div class="table-center">
+        <div class="center-cards" id="center-cards"></div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-action" onclick="passCard()">پاس</button>
+      <button class="btn-action primary-action" onclick="playCard()">▶ انداختن کارت</button>
+    </div>
+
+    <div class="hand-area">
+      <div class="hand-label">دست شما</div>
+      <div class="hand-cards" id="hand-cards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────── HOKM SELECT MODAL ──────────── -->
+<div class="modal-overlay" id="modal-hokm">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🃏 انتخاب حکم</div>
+    <div class="modal-subtitle">شما حکم‌بازید! یک خال را به عنوان حکم انتخاب کنید</div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <button class="btn-action" style="padding:20px 10px; font-size:28px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px;" onclick="selectHokm('hearts','♥','دل')">
+        <span style="color:var(--accent-red)">♥</span>
+        <span style="font-size:13px; color:var(--text-secondary); font-family:Vazirmatn,sans-serif; font-weight:700;">دل</span>
+      </button>
+      <button class="btn-action" style="padding:20px 10px; font-size:28px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px;" onclick="selectHokm('diamonds','♦','خشت')">
+        <span style="color:var(--accent-red)">♦</span>
+        <span style="font-size:13px; color:var(--text-secondary); font-family:Vazirmatn,sans-serif; font-weight:700;">خشت</span>
+      </button>
+      <button class="btn-action" style="padding:20px 10px; font-size:28px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px;" onclick="selectHokm('spades','♠','پیک')">
+        <span style="color:var(--text-primary)">♠</span>
+        <span style="font-size:13px; color:var(--text-secondary); font-family:Vazirmatn,sans-serif; font-weight:700;">پیک</span>
+      </button>
+      <button class="btn-action" style="padding:20px 10px; font-size:28px; border-radius:14px; background:var(--bg-card); border:1px solid var(--border); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px;" onclick="selectHokm('clubs','♣','گرز')">
+        <span style="color:var(--text-primary)">♣</span>
+        <span style="font-size:13px; color:var(--text-secondary); font-family:Vazirmatn,sans-serif; font-weight:700;">گرز</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────── WIN MODAL ──────────── -->
+<div class="modal-overlay" id="modal-win">
+  <div class="modal-sheet" style="text-align:center; padding:30px 20px 48px;">
+    <div class="modal-handle"></div>
+    <div style="font-size:60px; margin-bottom:12px;" id="win-emoji">🏆</div>
+    <div style="font-size:26px; font-weight:900; margin-bottom:6px;" id="win-title">تیم آبی برنده شد!</div>
+    <div style="font-size:14px; color:var(--text-secondary); margin-bottom:28px;" id="win-sub">۷ دست برده</div>
+    <button class="btn-primary" onclick="restartGame()">⚡ بازی مجدد</button>
+    <button class="btn-secondary" onclick="goToLobby()">بازگشت به لابی</button>
+  </div>
+</div>
+
+<script>
+const ROOMS_DATA = [
+  { id:'A1F3', name:'اتاق ولتاژ بالا', locked:true, pin:'1234', players:[], capacity:4 },
+  { id:'B2C8', name:'مدار فشار قوی', locked:false, pin:null, players:[], capacity:4 },
+  { id:'D9E2', name:'ترانس فرمر ۴۰۰', locked:true, pin:'5678', players:[], capacity:4 },
+  { id:'F4G7', name:'کنتاکتور برقی', locked:false, pin:null, players:[], capacity:4 },
+];
+
+const CARD_RANKS = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+const CARD_SUITS = [
+  { s:'hearts', sym:'♥', name:'دل', red:true },
+  { s:'diamonds', sym:'♦', name:'خشت', red:true },
+  { s:'spades', sym:'♠', name:'پیک', red:false },
+  { s:'clubs', sym:'♣', name:'گرز', red:false },
+];
+
+let state = {
+  currentRoom: null,
+  createPin: '',
+  createHasPin: false,
+  joinPin: '',
+  joinTargetRoom: null,
+  hand: [],
+  selectedCard: -1,
+  hokm: null,
+  scoreA: 0,
+  scoreB: 0,
+  round: 1,
+  trickCount: 0,
+  centerCards: [],
+  playLocked: false,
+  myName: 'علی',
+};
+
+function getAvColors() {
+  return ['av-blue','av-green','av-orange','av-red'];
+}
+
+function renderRooms() {
+  const list = document.getElementById('rooms-list');
+  list.innerHTML = '';
+  ROOMS_DATA.forEach(room => {
+    const filled = room.players.length;
+    const full = filled >= room.capacity;
+    const avColors = getAvColors();
+    let avatarsHTML = room.players.slice(0,4).map((p,i) =>
+      `<div class="player-avatar ${avColors[i]}">${p[0]}</div>`
+    ).join('');
+    for(let i=filled; i<4; i++) avatarsHTML += `<div class="player-avatar av-empty">?</div>`;
+
+    list.innerHTML += `
+      <div class="room-card ${room.locked?'locked':'open'}" onclick="tryJoinRoom('${room.id}')">
+        <div class="room-header">
+          <span class="room-name">${room.name}</span>
+          <span class="room-id-badge">#${room.id}</span>
+        </div>
+        <div class="room-meta">
+          <div class="room-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>${filled}/${room.capacity} بازیکن</span>
+          </div>
+          <div class="room-meta-item room-status-icon">
+            ${room.locked
+              ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>رمزدار</span>`
+              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg><span>آزاد</span>`
+            }
+          </div>
+          ${full ? '<div class="room-meta-item" style="color:var(--accent-red)"><span>پر</span></div>' : ''}
+        </div>
+        <div class="room-footer">
+          <div class="players-avatars">${avatarsHTML}</div>
+          <button class="room-join-btn ${room.locked?'locked':'open'}" onclick="tryJoinRoom('${room.id}'); event.stopPropagation()">
+            ${full ? 'پر' : room.locked ? '🔒 ورود' : '▶ ورود'}
+          </button>
+        </div>
+      </div>`;
+  });
+  document.getElementById('stat-rooms').textContent = ROOMS_DATA.length;
+}
+
+function tryJoinRoom(id) {
+  const room = ROOMS_DATA.find(r => r.id === id);
+  if (!room) return;
+  if (room.players.length >= room.capacity) { showToast('اتاق پر است ⚠️'); return; }
+  state.joinTargetRoom = room;
+  if (room.locked) {
+    state.joinPin = '';
+    updatePinDisplay('join-pin-display', '');
+    document.getElementById('pin-room-name').textContent = `رمز اتاق «${room.name}»`;
+    document.getElementById('modal-pin').classList.add('show');
+  } else {
+    enterRoom(room);
+  }
+}
+
+function enterRoom(room) {
+  state.currentRoom = room;
+  if (!room.players.includes(state.myName)) {
+    room.players.push(state.myName);
+  }
+  document.getElementById('waiting-room-title').textContent = room.name;
+  document.getElementById('waiting-room-id').textContent = '#' + room.id;
+  renderWaitingPlayers(room);
+  showScreen('screen-waiting');
+  closeModal('modal-pin');
+  renderRooms();
+}
+
+const SLOT_COLORS = ['av-blue','av-red','av-green','av-orange'];
+const SLOT_ACCENT = ['var(--accent-cyan)','var(--accent-red)','var(--accent-green)','var(--accent-orange)'];
+
+function renderWaitingPlayers(room) {
+  const grid = document.getElementById('waiting-players-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < room.capacity; i++) {
+    const player = room.players[i];
+    const isMe = player === state.myName;
+    if (player) {
+      grid.innerHTML += `
+        <div class="waiting-player">
+          <div class="waiting-avatar joined ${SLOT_COLORS[i]}" style="color:${SLOT_ACCENT[i]};border-color:${SLOT_ACCENT[i]};">${player[0].toUpperCase()}</div>
+          <span class="waiting-player-name">${player}${isMe ? ' (شما)' : ''}</span>
+        </div>`;
+    } else {
+      grid.innerHTML += `
+        <div class="waiting-player">
+          <div class="waiting-avatar empty">?</div>
+          <span class="waiting-player-name">در انتظار...</span>
+        </div>`;
+    }
+  }
+  const joined = room.players.length;
+  const startBtn = document.querySelector('#screen-waiting .btn-primary');
+  if (startBtn) {
+    startBtn.textContent = joined >= 2
+      ? '▶ شروع بازی (' + joined + '/4)'
+      : 'منتظر بازیکن... (' + joined + '/4)';
+    startBtn.disabled = joined < 2;
+    startBtn.style.opacity = joined < 2 ? '0.4' : '1';
+  }
+}
+
+function startGame() {
+  initGame();
+  showScreen('screen-game');
+  setTimeout(() => {
+    document.getElementById('modal-hokm').classList.add('show');
+  }, 300);
+}
+
+function initGame() {
+  state.hand = dealHand();
+  state.selectedCard = -1;
+  state.scoreA = 0;
+  state.scoreB = 0;
+  state.round = 1;
+  state.trickCount = 0;
+  state.centerCards = [];
+  state.playLocked = false;
+  // Set player names from room
+  const room = state.currentRoom;
+  const players = room ? room.players : [];
+  document.getElementById('p1-name').textContent = players[0] || state.myName;
+  document.getElementById('p3-name').textContent = players[2] || '---';
+  document.getElementById('p2-name').textContent = players[1] || '---';
+  document.getElementById('p4-name').textContent = players[3] || '---';
+  renderHand();
+  renderCenter();
+  updateScores();
+}
+
+function dealHand() {
+  const deck = [];
+  CARD_SUITS.forEach(suit => {
+    CARD_RANKS.forEach(rank => {
+      deck.push({ rank, suit });
+    });
+  });
+  for(let i=deck.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [deck[i],deck[j]]=[deck[j],deck[i]];
+  }
+  return deck.slice(0,13);
+}
+
+function renderHand() {
+  const container = document.getElementById('hand-cards');
+  container.innerHTML = '';
+  state.hand.forEach((card, i) => {
+    const isRed = card.suit.red;
+    const fanAngle = (i - (state.hand.length-1)/2) * 3;
+    const fanY = Math.abs(fanAngle) * 0.5;
+    container.innerHTML += `
+      <div class="hand-card ${isRed?'red-card':'black-card'} ${state.selectedCard===i?'selected':''}"
+           style="transform: rotate(${fanAngle}deg) translateY(${fanY}px);"
+           onclick="selectCard(${i})">
+        <div class="card-rank">${card.rank}</div>
+        <div class="card-suit">${card.suit.sym}</div>
+        <div class="card-rank-bot">${card.rank}</div>
+      </div>`;
+  });
+}
+
+function selectCard(i) {
+  state.selectedCard = state.selectedCard === i ? -1 : i;
+  renderHand();
+}
+
+const SLOT_ANGLE  = [0, -10, 6, -4];
+const SLOT_COLORS_CARD = ['var(--accent-cyan)','var(--accent-red)','var(--accent-green)','var(--accent-orange)'];
+
+function getOwnerMeta(owner) {
+  const room = state.currentRoom;
+  const players = room ? room.players : [];
+  const slots = { me: 0, p2: 1, p3: 2, p4: 3 };
+  const idx = slots[owner] ?? 0;
+  const name = idx === 0 ? 'شما' : (players[idx] || 'بازیکن ' + (idx+1));
+  return {
+    label: name,
+    color: SLOT_COLORS_CARD[idx],
+    angle: SLOT_ANGLE[idx],
+  };
+}
+
+function renderCenter() {
+  const container = document.getElementById('center-cards');
+  container.innerHTML = '';
+  if (state.centerCards.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;letter-spacing:1px;text-align:center;">انتظار برای بازی...</div>';
+    return;
+  }
+  const offsets = [
+    { x: -38, y: -10 }, { x: 10, y: -18 },
+    { x: -14, y: 14 },  { x: 34, y: 6 }
+  ];
+  state.centerCards.forEach((card, i) => {
+    const isRed = card.suit.red;
+    const owner = card.owner || 'me';
+    const meta = getOwnerMeta(owner);
+    const off = offsets[i] || { x: 0, y: 0 };
+    const angle = meta.angle + (Math.random() * 4 - 2);
+    container.innerHTML += `
+      <div class="played-card ${isRed ? 'red' : 'black'}"
+           style="transform: rotate(${angle}deg) translate(${off.x}px,${off.y}px); animation: card-drop 0.25s ease;">
+        <div style="display:flex;flex-direction:column;height:100%;justify-content:space-between;align-items:center;">
+          <span style="font-size:10px;font-weight:900;align-self:flex-start;line-height:1;">${card.rank}</span>
+          <span style="font-size:20px;line-height:1;">${card.suit.sym}</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;width:100%;gap:1px;">
+            <span style="font-size:8px;font-weight:700;color:${meta.color};letter-spacing:0.3px;line-height:1;align-self:center;">${meta.label}</span>
+            <span style="font-size:10px;font-weight:900;align-self:flex-end;transform:rotate(180deg);line-height:1;">${card.rank}</span>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+function playCard() {
+  if (state.playLocked) return;
+  if (state.selectedCard < 0) { showToast('یک کارت انتخاب کنید'); return; }
+  state.playLocked = true;
+
+  const card = state.hand[state.selectedCard];
+  state.hand.splice(state.selectedCard, 1);
+  state.selectedCard = -1;
+  state.centerCards = [];
+
+  // مرحله ۱: کارت خودمون روی میز
+  state.centerCards.push({ ...card, owner: 'me' });
+  renderHand();
+  renderCenter();
+  showToast('کارت انداختی — نوبت بقیه...');
+
+  // مرحله ۲: بازیکن ۲ بعد ۰.۷s
+  setTimeout(() => {
+    state.centerCards.push({ ...getOneAICard(), owner: 'p2' });
+    renderCenter();
+
+    // مرحله ۳: بازیکن ۳ بعد ۰.۶s
+    setTimeout(() => {
+      state.centerCards.push({ ...getOneAICard(), owner: 'p3' });
+      renderCenter();
+
+      // مرحله ۴: بازیکن ۴ بعد ۰.۶s
+      setTimeout(() => {
+        state.centerCards.push({ ...getOneAICard(), owner: 'p4' });
+        renderCenter();
+
+        // مرحله ۵: اعلام نتیجه بعد ۱.۲s
+        setTimeout(() => {
+          const won = Math.random() > 0.45;
+          if (won) {
+            state.trickCount++;
+            showToast('✅ این دست رو بردید!');
+          } else {
+            showToast('❌ این دست رو باختید');
+          }
+
+          state.round++;
+          document.getElementById('round-badge').textContent = 'دست ' + state.round;
+          document.getElementById('trick-count').textContent = 'برد: ' + state.trickCount + '/۷';
+
+          const opponentTricks = (state.round - 1) - state.trickCount;
+
+          if (state.trickCount >= 7) { endRound(true); return; }
+          if (opponentTricks >= 7)   { endRound(false); return; }
+
+          // پاک کردن میز بعد از نمایش
+          setTimeout(() => {
+            state.centerCards = [];
+            if (state.hand.length < 3) state.hand = dealHand();
+            renderCenter();
+            renderHand();
+            state.playLocked = false;
+          }, 900);
+
+        }, 1200);
+      }, 600);
+    }, 600);
+  }, 700);
+}
+
+function getOneAICard() {
+  const suit = CARD_SUITS[Math.floor(Math.random() * 4)];
+  const rank = CARD_RANKS[Math.floor(Math.random() * 13)];
+  return { rank, suit };
+}
+
+function getAICards(count) {
+  const cards = [];
+  for (let i = 0; i < count; i++) cards.push(getOneAICard());
+  return cards;
+}
+
+function passCard() {
+  if (state.playLocked) return;
+  showToast('پاس دادید');
+  state.playLocked = true;
+  state.centerCards = getAICards(3).map((c,i) => ({ ...c, owner: ['p2','p3','p4'][i] }));
+  renderCenter();
+  state.round++;
+  setTimeout(() => {
+    state.centerCards = [];
+    renderCenter();
+    state.playLocked = false;
+  }, 1200);
+}
+
+function endRound(won) {
+  if (won) {
+    state.scoreA++;
+  } else {
+    state.scoreB++;
+  }
+  updateScores();
+
+  if (state.scoreA >= 7 || state.scoreB >= 7) {
+    const winnerTeam = state.scoreA >= 7 ? 'تیم آبی' : 'تیم قرمز';
+    document.getElementById('win-emoji').textContent = state.scoreA >= 7 ? '🏆' : '😔';
+    document.getElementById('win-title').textContent = winnerTeam + ' برنده شد!';
+    document.getElementById('win-sub').textContent = `امتیاز: ${state.scoreA} - ${state.scoreB}`;
+    document.getElementById('modal-win').classList.add('show');
+  } else {
+    state.round = 1;
+    state.trickCount = 0;
+    state.hand = dealHand();
+    state.centerCards = [];
+    renderHand();
+    renderCenter();
+    document.getElementById('round-badge').textContent = 'دست ۱';
+    document.getElementById('trick-count').textContent = 'برد: ۰/۷';
+    showToast(won ? '🎉 یک ست بردید!' : '💥 ست رو باختید!');
+  }
+}
+
+function updateScores() {
+  document.getElementById('score-a').textContent = state.scoreA;
+  document.getElementById('score-b').textContent = state.scoreB;
+}
+
+function selectHokm(suit, sym, name) {
+  state.hokm = suit;
+  const el = document.getElementById('hokm-indicator');
+  el.className = `hokm-suit suit-${suit}`;
+  el.innerHTML = `<span class="suit-icon">${sym}</span><span class="suit-name">${name}</span>`;
+  closeModal('modal-hokm');
+  showToast(`⚡ حکم: ${name} ${sym}`);
+}
+
+function restartGame() {
+  closeModal('modal-win');
+  initGame();
+  setTimeout(() => document.getElementById('modal-hokm').classList.add('show'), 200);
+}
+
+function goToLobby() {
+  closeModal('modal-win');
+  showScreen('screen-lobby');
+}
+
+function showCreateRoom() {
+  state.createPin = '';
+  state.createHasPin = false;
+  document.getElementById('pwd-switch').className = 'switch';
+  document.getElementById('pin-setup-area').style.display = 'none';
+  document.getElementById('room-name-input').value = '';
+  updatePinDisplay('create-pin-display', '');
+  document.getElementById('modal-create').classList.add('show');
+}
+
+function togglePassword(row) {
+  state.createHasPin = !state.createHasPin;
+  const sw = document.getElementById('pwd-switch');
+  const area = document.getElementById('pin-setup-area');
+  sw.className = 'switch ' + (state.createHasPin ? 'on' : '');
+  area.style.display = state.createHasPin ? 'block' : 'none';
+  state.createPin = '';
+  updatePinDisplay('create-pin-display', '');
+}
+
+function createPinPress(d) {
+  if (state.createPin.length < 4) {
+    state.createPin += d;
+    updatePinDisplay('create-pin-display', state.createPin);
+  }
+}
+
+function createPinDelete() {
+  state.createPin = state.createPin.slice(0,-1);
+  updatePinDisplay('create-pin-display', state.createPin);
+}
+
+function createPinClear() {
+  state.createPin = '';
+  updatePinDisplay('create-pin-display', '');
+}
+
+function joinPinPress(d) {
+  if (state.joinPin.length < 4) {
+    state.joinPin += d;
+    updatePinDisplay('join-pin-display', state.joinPin);
+    if (state.joinPin.length === 4) {
+      setTimeout(() => checkJoinPin(), 200);
+    }
+  }
+}
+
+function joinPinDelete() {
+  state.joinPin = state.joinPin.slice(0,-1);
+  updatePinDisplay('join-pin-display', state.joinPin);
+}
+
+function joinPinClear() {
+  state.joinPin = '';
+  updatePinDisplay('join-pin-display', '');
+}
+
+function checkJoinPin() {
+  const room = state.joinTargetRoom;
+  if (state.joinPin === room.pin) {
+    enterRoom(room);
+  } else {
+    const disp = document.getElementById('join-pin-display');
+    disp.classList.add('pin-error');
+    setTimeout(() => {
+      disp.classList.remove('pin-error');
+      state.joinPin = '';
+      updatePinDisplay('join-pin-display', '');
+    }, 800);
+    showToast('❌ رمز اشتباه است');
+  }
+}
+
+function updatePinDisplay(id, pin) {
+  const dots = document.querySelectorAll(`#${id} .pin-dot`);
+  dots.forEach((dot, i) => {
+    dot.className = 'pin-dot' + (i < pin.length ? ' filled' : '');
+  });
+}
+
+function doCreateRoom() {
+  const name = document.getElementById('room-name-input').value.trim();
+  if (!name) { showToast('نام اتاق را وارد کنید'); return; }
+  if (state.createHasPin && state.createPin.length < 4) {
+    showToast('رمز ۴ رقمی کامل نیست'); return;
+  }
+
+  const newRoom = {
+    id: Math.random().toString(36).substr(2,4).toUpperCase(),
+    name,
+    locked: state.createHasPin,
+    pin: state.createHasPin ? state.createPin : null,
+    players: [state.myName],
+    capacity: 4,
+  };
+
+  ROOMS_DATA.unshift(newRoom);
+  renderRooms();
+  closeModal('modal-create');
+  state.currentRoom = newRoom;
+  document.getElementById('waiting-room-title').textContent = name;
+  document.getElementById('waiting-room-id').textContent = '#' + newRoom.id;
+  renderWaitingPlayers(newRoom);
+  showScreen('screen-waiting');
+  showToast(`✅ اتاق «${name}» ساخته شد`);
+}
+
+function copyRoomLink() {
+  const room = state.currentRoom;
+  showToast('📋 لینک کپی شد!');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goBack() {
+  const cur = document.querySelector('.screen.active').id;
+  if (cur === 'screen-waiting') showScreen('screen-lobby');
+  else if (cur === 'screen-game') showScreen('screen-waiting');
+  else showScreen('screen-lobby');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function submitName() {
+  const input = document.getElementById('player-name-input');
+  const name = input.value.trim();
+  const errEl = document.getElementById('name-error-msg');
+  if (!name) {
+    input.classList.add('error');
+    errEl.textContent = 'لطفاً نام خود را وارد کنید';
+    input.focus();
+    return;
+  }
+  if (name.length < 2) {
+    input.classList.add('error');
+    errEl.textContent = 'نام باید حداقل ۲ حرف باشد';
+    input.focus();
+    return;
+  }
+  state.myName = name;
+  applyPlayerName(name);
+  showScreen('screen-lobby');
+  setTimeout(() => showToast('⚡ خوش آمدی ' + name + '!'), 300);
+}
+
+function clearNameError() {
+  document.getElementById('player-name-input').classList.remove('error');
+  document.getElementById('name-error-msg').textContent = '';
+}
+
+function applyPlayerName(name) {
+  const first = name[0].toUpperCase();
+  document.getElementById('lobby-avatar').textContent = first;
+  document.getElementById('lobby-player-name').textContent = name;
+  document.getElementById('lobby-hero-title').textContent = 'سلام ' + name + ' 👋';
+  document.getElementById('p1-name').textContent = name;
+}
+
+function changeName() {
+  const input = document.getElementById('player-name-input');
+  input.value = state.myName;
+  clearNameError();
+  showScreen('screen-name');
+  setTimeout(() => { input.focus(); input.select(); }, 200);
+}
+
+try {
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.expand();
+    tg.ready();
+    tg.enableClosingConfirmation();
+    if (tg.initDataUnsafe?.user?.first_name) {
+      document.getElementById('player-name-input').value = tg.initDataUnsafe.user.first_name;
+    }
+  }
+} catch(e) {}
+
+renderRooms();
+</script>
+</body>
+</html>
